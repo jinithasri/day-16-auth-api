@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Day 17 - User Dashboard</title>
+
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f4f4f4;
+        }
+
+        h1 {
+            color: #222;
+        }
+
+        section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        input {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        #message {
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <h1>🚀 Day 17 - User Dashboard</h1>
+
+    <div id="message"></div>
+
+
+    <!-- ========================= -->
+    <!-- SIGNUP -->
+    <!-- ========================= -->
+
+    <section>
+
+        <h2>Signup</h2>
+
+        <input
+            type="text"
+            id="signupName"
+            placeholder="Name"
+        >
+
+        <input
+            type="email"
+            id="signupEmail"
+            placeholder="Email"
+        >
+
+        <input
+            type="password"
+            id="signupPassword"
+            placeholder="Password"
+        >
+
+        <button onclick="signup()">
+            Signup
+        </button>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- LOGIN -->
+    <!-- ========================= -->
+
+    <section>
+
+        <h2>Login</h2>
+
+        <input
+            type="email"
+            id="loginEmail"
+            placeholder="Email"
+        >
+
+        <input
+            type="password"
+            id="loginPassword"
+            placeholder="Password"
+        >
+
+        <button onclick="login()">
+            Login
+        </button>
+
+        <button onclick="logout()">
+            Logout
+        </button>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- PROFILE -->
+    <!-- ========================= -->
+
+    <section>
+
+        <h2>My Profile</h2>
+
+        <button onclick="getProfile()">
+            Get Profile
+        </button>
+
+        <pre id="profile"></pre>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- SEARCH -->
+    <!-- ========================= -->
+
+    <section>
+
+        <h2>Search Users</h2>
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by name"
+        >
+
+        <button onclick="searchUsers()">
+            Search
+        </button>
+
+        <button onclick="getUsers()">
+            Show All
+        </button>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- ADD USER -->
+    <!-- ========================= -->
+
+    <section>
+
+        <h2>Add User</h2>
+
+        <input
+            type="text"
+            id="userName"
+            placeholder="Name"
+        >
+
+        <input
+            type="email"
+            id="userEmail"
+            placeholder="Email"
+        >
+
+        <input
+            type="number"
+            id="userAge"
+            placeholder="Age"
+        >
+
+        <button onclick="addUser()">
+            Add User
+        </button>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- USER TABLE -->
+    <!-- ========================= -->
+
+    <section>
+
+        <h2>Users</h2>
+
+        <button onclick="getUsers()">
+            Load Users
+        </button>
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Name</th>
+
+                    <th>Email</th>
+
+                    <th>Age</th>
+
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="userTable">
+
+            </tbody>
+
+        </table>
+
+    </section>
+
+
+<script>
+
+// =====================================================
+// API URL
+// =====================================================
+
+const API = "http://localhost:3000";
+
+
+// =====================================================
+// SHOW MESSAGE
+// =====================================================
+
+function showMessage(message) {
+
+    document.getElementById("message").innerText = message;
+
+}
+
+
+// =====================================================
+// GET JWT TOKEN
+// =====================================================
+
+function getToken() {
+
+    return localStorage.getItem("token");
+
+}
+
+
+// =====================================================
+// CHECK LOGIN
+// =====================================================
+
+function isLoggedIn() {
+
+    return !!getToken();
+
+}
+
+
+// =====================================================
+// AUTH HEADERS
+// =====================================================
+
+function authHeaders() {
+
+    const token = getToken();
+
+    return {
+
+        Authorization: `Bearer ${token}`
+
+    };
+
+}
+
+
+// =====================================================
+// SIGNUP
+// =====================================================
+
+async function signup() {
+
+    try {
+
+        const name =
+            document.getElementById("signupName").value;
+
+        const email =
+            document.getElementById("signupEmail").value;
+
+        const password =
+            document.getElementById("signupPassword").value;
+
+
+        if (!name || !email || !password) {
+
+            showMessage(
+                "Please fill all signup fields"
+            );
+
+            return;
+        }
+
+
+        const response = await axios.post(
+
+            `${API}/signup`,
+
+            {
+                name,
+                email,
+                password
+            }
+
+        );
+
+
+        showMessage(
+            response.data.message
+        );
+
+
+        document.getElementById("signupName").value = "";
+        document.getElementById("signupEmail").value = "";
+        document.getElementById("signupPassword").value = "";
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+
+            error.response?.data?.message ||
+            "Signup failed"
+
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// LOGIN
+// =====================================================
+
+async function login() {
+
+    try {
+
+        const email =
+            document.getElementById("loginEmail").value;
+
+        const password =
+            document.getElementById("loginPassword").value;
+
+
+        if (!email || !password) {
+
+            showMessage(
+                "Please enter email and password"
+            );
+
+            return;
+        }
+
+
+        const response = await axios.post(
+
+            `${API}/login`,
+
+            {
+                email,
+                password
+            }
+
+        );
+
+
+        // SAVE JWT
+        localStorage.setItem(
+            "token",
+            response.data.token
+        );
+
+
+        showMessage(
+            "Login successful!"
+        );
+
+
+        // Automatically load users
+        await getUsers();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+
+            error.response?.data?.message ||
+            "Login failed"
+
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// LOGOUT
+// =====================================================
+
+async function logout() {
+
+    try {
+
+        const token = getToken();
+
+
+        if (!token) {
+
+            showMessage(
+                "Already logged out"
+            );
+
+            return;
+        }
+
+
+        await axios.post(
+
+            `${API}/logout`,
+
+            {},
+
+            {
+                headers: authHeaders()
+            }
+
+        );
+
+
+        localStorage.removeItem("token");
+
+
+        document.getElementById(
+            "userTable"
+        ).innerHTML = "";
+
+
+        document.getElementById(
+            "profile"
+        ).innerText = "";
+
+
+        showMessage(
+            "Logged out successfully"
+        );
+
+
+    } catch (error) {
+
+        // Remove token locally even if
+        // backend logout gives an error
+
+        localStorage.removeItem("token");
+
+
+        document.getElementById(
+            "userTable"
+        ).innerHTML = "";
+
+
+        showMessage(
+            "Logged out successfully"
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// GET PROFILE
+// =====================================================
+
+async function getProfile() {
+
+    try {
+
+        if (!isLoggedIn()) {
+
+            showMessage(
+                "Please login first"
+            );
+
+            return;
+        }
+
+
+        const response = await axios.get(
+
+            `${API}/profile`,
+
+            {
+                headers: authHeaders()
+            }
+
+        );
+
+
+        document.getElementById(
+            "profile"
+        ).innerText = JSON.stringify(
+
+            response.data,
+
+            null,
+
+            2
+
+        );
+
+
+        showMessage(
+            "Profile loaded"
+        );
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        showMessage(
+
+            error.response?.data?.message ||
+            "Could not fetch profile"
+
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// GET ALL USERS
+// =====================================================
+
+async function getUsers() {
+
+    try {
+
+        if (!isLoggedIn()) {
+
+            showMessage(
+                "Please login first"
+            );
+
+            return;
+        }
+
+
+        const response = await axios.get(
+
+            `${API}/users`,
+
+            {
+                headers: authHeaders()
+            }
+
+        );
+
+
+        displayUsers(
+            response.data
+        );
+
+
+        showMessage(
+
+            `${response.data.length} user(s) loaded`
+
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Get users error:",
+            error.response?.data || error
+        );
+
+
+        // If token expired or was logged out
+        if (
+            error.response?.status === 401 ||
+            error.response?.status === 400
+        ) {
+
+            localStorage.removeItem("token");
+
+        }
+
+
+        showMessage(
+
+            error.response?.data?.message ||
+            "Could not fetch users"
+
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// DISPLAY USERS
+// =====================================================
+
+function displayUsers(users) {
+
+    const table =
+        document.getElementById("userTable");
+
+
+    table.innerHTML = "";
+
+
+    if (!users || users.length === 0) {
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td colspan="4">
+
+                    No users found
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+    }
+
+
+    users.forEach(user => {
+
+        const row =
+            document.createElement("tr");
+
+
+        row.innerHTML = `
+
+            <td>
+                ${user.name || ""}
+            </td>
+
+            <td>
+                ${user.email || ""}
+            </td>
+
+            <td>
+                ${user.age || ""}
+            </td>
+
+            <td>
+
+                <button
+                    onclick="editUser('${user._id}')">
+
+                    Edit
+
+                </button>
+
+
+                <button
+                    onclick="deleteUser('${user._id}')">
+
+                    Delete
+
+                </button>
+
+            </td>
+
+        `;
+
+
+        table.appendChild(row);
+
+    });
+
+}
+
+
+// =====================================================
+// ADD USER
+// =====================================================
+
+async function addUser() {
+
+    try {
+
+        if (!isLoggedIn()) {
+
+            showMessage(
+                "Please login first"
+            );
+
+            return;
+        }
+
+
+        const name =
+            document.getElementById(
+                "userName"
+            ).value;
+
+
+        const email =
+            document.getElementById(
+                "userEmail"
+            ).value;
+
+
+        const age =
+            Number(
+                document.getElementById(
+                    "userAge"
+                ).value
+            );
+
+
+        if (!name || !email || !age) {
+
+            showMessage(
+                "Please enter name, email and age"
+            );
+
+            return;
+        }
+
+
+        await axios.post(
+
+            `${API}/users`,
+
+            {
+                name,
+                email,
+                age
+            },
+
+            {
+                headers: authHeaders()
+            }
+
+        );
+
+
+        showMessage(
+            "User added successfully"
+        );
+
+
+        // Clear inputs
+
+        document.getElementById(
+            "userName"
+        ).value = "";
+
+        document.getElementById(
+            "userEmail"
+        ).value = "";
+
+        document.getElementById(
+            "userAge"
+        ).value = "";
+
+
+        await getUsers();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        showMessage(
+
+            error.response?.data?.message ||
+            "Could not add user"
+
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// EDIT USER
+// =====================================================
+
+async function editUser(id) {
+
+    if (!isLoggedIn()) {
+
+        showMessage(
+            "Please login first"
+        );
+
+        return;
+    }
+
+
+    const name =
+        prompt(
+            "Enter new name:"
+        );
+
+
+    if (!name) {
+
+        return;
+    }
+
+
+    try {
+
+        await axios.put(
+
+            `${API}/users/${id}`,
+
+            {
+                name
+            },
+
+            {
+                headers: authHeaders()
+            }
+
+        );
+
+
+        showMessage(
+            "User updated successfully"
+        );
+
+
+        await getUsers();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        showMessage(
+
+            error.response?.data?.message ||
+            "Could not update user"
+
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// DELETE USER
+// =====================================================
+
+async function deleteUser(id) {
+
+    if (!isLoggedIn()) {
+
+        showMessage(
+            "Please login first"
+        );
+
+        return;
+    }
+
+
+    const confirmed =
+        confirm(
+            "Delete this user?"
+        );
+
+
+    if (!confirmed) {
+
+        return;
+    }
+
+
+    try {
+
+        await axios.delete(
+
+            `${API}/users/${id}`,
+
+            {
+                headers: authHeaders()
+            }
+
+        );
+
+
+        showMessage(
+            "User deleted successfully"
+        );
+
+
+        await getUsers();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        showMessage(
+
+            error.response?.data?.message ||
+            "Could not delete user"
+
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// SEARCH USERS
+// =====================================================
+
+async function searchUsers() {
+
+    try {
+
+        if (!isLoggedIn()) {
+
+            showMessage(
+                "Please login first"
+            );
+
+            return;
+        }
+
+
+        const search =
+            document.getElementById(
+                "searchInput"
+            ).value
+             .toLowerCase()
+             .trim();
+
+
+        if (!search) {
+
+            await getUsers();
+
+            return;
+        }
+
+
+        // Get users WITH JWT
+
+        const response =
+            await axios.get(
+
+                `${API}/users`,
+
+                {
+                    headers: authHeaders()
+                }
+
+            );
+
+
+        const filtered =
+            response.data.filter(
+
+                user =>
+
+                    user.name
+                        .toLowerCase()
+                        .includes(search)
+
+            );
+
+
+        displayUsers(
+            filtered
+        );
+
+
+        showMessage(
+
+            `${filtered.length} user(s) found`
+
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Search error:",
+            error.response?.data || error
+        );
+
+
+        showMessage(
+
+            error.response?.data?.message ||
+            "Search failed"
+
+        );
+
+    }
+
+}
+
+</script>
+
+</body>
+
+</html>

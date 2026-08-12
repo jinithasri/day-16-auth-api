@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
+
     name: {
         type: String,
         required: true
@@ -17,11 +18,24 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
+    age: {
+        type: Number,
+        min: 1,
+        max: 100
+    },
+
     role: {
         type: String,
-        enum: ["admin", "user"],
+        enum: ["user", "admin"],
         default: "user"
+    },
+
+    isActive: {
+        type: Boolean,
+        default: true
     }
+
 });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports =
+    mongoose.model("User", userSchema);
