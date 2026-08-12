@@ -1,279 +1,378 @@
+// ======================================================
+// API URL
+// ======================================================
+
 const API = "https://jinitha-day-16-auth-api.onrender.com";
 
-// ===============================
-// MESSAGE
-// ===============================
+
+// ======================================================
+// SHOW MESSAGE
+// ======================================================
 
 function showMessage(message) {
-    const msg = document.getElementById("message");
-
-    if (msg) {
-        msg.textContent = message;
-    }
+    document.getElementById("message").innerText = message;
 }
 
-// ===============================
+
+// ======================================================
+// GET JWT TOKEN
+// ======================================================
+
+function getToken() {
+    return localStorage.getItem("token");
+}
+
+
+// ======================================================
+// CHECK LOGIN
+// ======================================================
+
+function isLoggedIn() {
+    return !!getToken();
+}
+
+
+// ======================================================
+// AUTH HEADERS
+// ======================================================
+
+function authHeaders() {
+
+    const token = getToken();
+
+    return {
+        Authorization: `Bearer ${token}`
+    };
+}
+
+
+// ======================================================
 // SIGNUP
-// ===============================
+// ======================================================
 
 async function signup() {
-    const name = document.getElementById("signupName").value;
-    const email = document.getElementById("signupEmail").value;
-    const password = document.getElementById("signupPassword").value;
 
     try {
-        const response = await fetch(`${API}/signup`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                name,
-                email,
-                password
-            })
-        });
 
-        const data = await response.json();
+        const name =
+            document.getElementById("signupName").value.trim();
 
-        if (!response.ok) {
-            showMessage(data.message || "Signup failed");
+        const email =
+            document.getElementById("signupEmail").value.trim();
+
+        const password =
+            document.getElementById("signupPassword").value;
+
+        if (!name || !email || !password) {
+
+            showMessage("Please fill all signup fields");
+
             return;
         }
 
-        showMessage("Signup successful! You can now login.");
+        const response = await axios.post(
+            `${API}/signup`,
+            {
+                name,
+                email,
+                password
+            }
+        );
+
+        showMessage(
+            response.data.message || "Signup successful!"
+        );
 
         document.getElementById("signupName").value = "";
         document.getElementById("signupEmail").value = "";
         document.getElementById("signupPassword").value = "";
 
     } catch (error) {
-        console.error(error);
-        showMessage("Signup failed");
+
+        console.error("Signup error:", error);
+
+        showMessage(
+            error.response?.data?.message ||
+            "Signup failed"
+        );
     }
 }
 
-// ===============================
+
+// ======================================================
 // LOGIN
-// ===============================
+// ======================================================
 
 async function login() {
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
 
     try {
-        const response = await fetch(`${API}/login`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email,
-                password
-            })
-        });
 
-        const data = await response.json();
+        const email =
+            document.getElementById("loginEmail").value.trim();
 
-        if (!response.ok) {
-            showMessage(data.message || "Login failed");
+        const password =
+            document.getElementById("loginPassword").value;
+
+        if (!email || !password) {
+
+            showMessage("Please enter email and password");
+
             return;
         }
 
-        localStorage.setItem("token", data.token);
+        const response = await axios.post(
+            `${API}/login`,
+            {
+                email,
+                password
+            }
+        );
+
+        // Save JWT
+        localStorage.setItem(
+            "token",
+            response.data.token
+        );
 
         showMessage("Login successful!");
 
+        // Automatically load users
+        await getUsers();
+
     } catch (error) {
-        console.error(error);
-        showMessage("Login failed");
+
+        console.error("Login error:", error);
+
+        showMessage(
+            error.response?.data?.message ||
+            "Login failed"
+        );
     }
 }
 
-// ===============================
+
+// ======================================================
 // LOGOUT
-// ===============================
+// ======================================================
 
 async function logout() {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-        showMessage("Already logged out");
-        return;
-    }
 
     try {
-        const response = await fetch(`${API}/logout`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`
+
+        const token = getToken();
+
+        if (!token) {
+
+            showMessage("Already logged out");
+
+            return;
+        }
+
+        await axios.post(
+            `${API}/logout`,
+            {},
+            {
+                headers: authHeaders()
             }
-        });
-
-        const data = await response.json();
-
-        localStorage.removeItem("token");
-
-        showMessage(data.message || "Logout successful");
+        );
 
     } catch (error) {
-        console.error(error);
+
+        console.error("Logout error:", error);
+
+    } finally {
 
         localStorage.removeItem("token");
 
-        showMessage("Logged out");
+        document.getElementById("userTable").innerHTML = "";
+
+        document.getElementById("profile").innerText = "";
+
+        showMessage("Logged out successfully");
     }
 }
 
-// ===============================
+
+// ======================================================
 // GET PROFILE
-// ===============================
+// ======================================================
 
 async function getProfile() {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-        showMessage("Please login first");
-        return;
-    }
 
     try {
-        const response = await fetch(`${API}/profile`, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
 
-        const data = await response.json();
+        if (!isLoggedIn()) {
 
-        if (!response.ok) {
-            showMessage(data.message || "Could not fetch profile");
+            showMessage("Please login first");
+
             return;
         }
 
-        document.getElementById("profileResult").textContent =
-            JSON.stringify(data, null, 2);
+        const response = await axios.get(
+            `${API}/profile`,
+            {
+                headers: authHeaders()
+            }
+        );
+
+        document.getElementById("profile").innerText =
+            JSON.stringify(
+                response.data,
+                null,
+                2
+            );
+
+        showMessage("Profile loaded");
 
     } catch (error) {
-        console.error(error);
-        showMessage("Could not fetch profile");
+
+        console.error("Profile error:", error);
+
+        if (
+            error.response?.status === 401 ||
+            error.response?.status === 400
+        ) {
+
+            localStorage.removeItem("token");
+        }
+
+        showMessage(
+            error.response?.data?.message ||
+            "Could not fetch profile"
+        );
     }
 }
 
-// ===============================
-// LOAD USERS
-// ===============================
 
-async function loadUsers() {
-    const token = localStorage.getItem("token");
+// ======================================================
+// GET ALL USERS
+// ======================================================
 
-    if (!token) {
-        showMessage("Please login first");
-        return;
-    }
+async function getUsers() {
 
     try {
-        const response = await fetch(`${API}/users`, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
 
-        const users = await response.json();
+        if (!isLoggedIn()) {
 
-        if (!response.ok) {
-            showMessage(users.message || "Could not fetch users");
+            showMessage("Please login first");
+
             return;
         }
 
-        displayUsers(users);
+        const response = await axios.get(
+            `${API}/users`,
+            {
+                headers: authHeaders()
+            }
+        );
+
+        displayUsers(response.data);
+
+        showMessage(
+            `${response.data.length} user(s) loaded`
+        );
 
     } catch (error) {
-        console.error(error);
-        showMessage("Could not fetch users");
+
+        console.error("Get users error:", error);
+
+        if (
+            error.response?.status === 401 ||
+            error.response?.status === 400
+        ) {
+
+            localStorage.removeItem("token");
+        }
+
+        showMessage(
+            error.response?.data?.message ||
+            "Could not fetch users"
+        );
     }
 }
 
-// ===============================
+
+// ======================================================
 // DISPLAY USERS
-// ===============================
+// ======================================================
 
 function displayUsers(users) {
-    const tableBody = document.getElementById("usersTableBody");
 
-    if (!tableBody) {
+    const table =
+        document.getElementById("userTable");
+
+    table.innerHTML = "";
+
+    if (!users || users.length === 0) {
+
+        table.innerHTML =
+            "<tr><td colspan='3'>No users found</td></tr>";
+
         return;
     }
-
-    tableBody.innerHTML = "";
 
     users.forEach(user => {
 
-        const row = document.createElement("tr");
+        const row =
+            document.createElement("tr");
 
         row.innerHTML = `
             <td>${user.name || ""}</td>
             <td>${user.email || ""}</td>
             <td>${user.age || ""}</td>
-
-            <td>
-                <button onclick="editUser('${user._id}', '${user.name}', '${user.email}', '${user.age || ""}')">
-                    Edit
-                </button>
-
-                <button onclick="deleteUser('${user._id}')">
-                    Delete
-                </button>
-            </td>
         `;
 
-        tableBody.appendChild(row);
+        table.appendChild(row);
     });
 }
 
-// ===============================
+
+// ======================================================
 // ADD USER
-// ===============================
+// ======================================================
 
 async function addUser() {
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-        showMessage("Please login first");
-        return;
-    }
-
-    const name = document.getElementById("userName").value;
-    const email = document.getElementById("userEmail").value;
-    const age = document.getElementById("userAge").value;
-
     try {
 
-        const response = await fetch(`${API}/users`, {
+        if (!isLoggedIn()) {
 
-            method: "POST",
+            showMessage("Please login first");
 
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-            },
+            return;
+        }
 
-            body: JSON.stringify({
+        const name =
+            document.getElementById("userName").value.trim();
+
+        const email =
+            document.getElementById("userEmail").value.trim();
+
+        const age =
+            Number(
+                document.getElementById("userAge").value
+            );
+
+        if (!name || !email || !age) {
+
+            showMessage(
+                "Please enter name, email and age"
+            );
+
+            return;
+        }
+
+        await axios.post(
+            `${API}/users`,
+            {
                 name,
                 email,
                 age
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            showMessage(data.message || "Could not add user");
-            return;
-        }
+            },
+            {
+                headers: authHeaders()
+            }
+        );
 
         showMessage("User added successfully!");
 
@@ -281,179 +380,15 @@ async function addUser() {
         document.getElementById("userEmail").value = "";
         document.getElementById("userAge").value = "";
 
-        loadUsers();
+        await getUsers();
 
     } catch (error) {
 
-        console.error(error);
+        console.error("Add user error:", error);
 
-        showMessage("Could not add user");
-    }
-}
-
-// ===============================
-// EDIT USER
-// ===============================
-
-async function editUser(id, oldName, oldEmail, oldAge) {
-
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-        showMessage("Please login first");
-        return;
-    }
-
-    const name = prompt("Enter new name:", oldName);
-
-    if (name === null) {
-        return;
-    }
-
-    const email = prompt("Enter new email:", oldEmail);
-
-    if (email === null) {
-        return;
-    }
-
-    const age = prompt("Enter new age:", oldAge);
-
-    if (age === null) {
-        return;
-    }
-
-    try {
-
-        const response = await fetch(`${API}/users/${id}`, {
-
-            method: "PUT",
-
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-            },
-
-            body: JSON.stringify({
-                name,
-                email,
-                age
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            showMessage(data.message || "Update failed");
-            return;
-        }
-
-        showMessage("User updated successfully!");
-
-        loadUsers();
-
-    } catch (error) {
-
-        console.error(error);
-
-        showMessage("Update failed");
-    }
-}
-
-// ===============================
-// DELETE USER
-// ===============================
-
-async function deleteUser(id) {
-
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-        showMessage("Please login first");
-        return;
-    }
-
-    const confirmDelete = confirm(
-        "Are you sure you want to delete this user?"
-    );
-
-    if (!confirmDelete) {
-        return;
-    }
-
-    try {
-
-        const response = await fetch(`${API}/users/${id}`, {
-
-            method: "DELETE",
-
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            showMessage(data.message || "Delete failed");
-            return;
-        }
-
-        showMessage("User deleted successfully!");
-
-        loadUsers();
-
-    } catch (error) {
-
-        console.error(error);
-
-        showMessage("Delete failed");
-    }
-}
-
-// ===============================
-// SEARCH USERS
-// ===============================
-
-async function searchUsers() {
-
-    const searchText =
-        document.getElementById("searchInput").value
-        .toLowerCase();
-
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-        showMessage("Please login first");
-        return;
-    }
-
-    try {
-
-        const response = await fetch(`${API}/users`, {
-
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-
-        const users = await response.json();
-
-        if (!response.ok) {
-            showMessage(users.message || "Search failed");
-            return;
-        }
-
-        const filteredUsers = users.filter(user =>
-            user.name.toLowerCase().includes(searchText) ||
-            user.email.toLowerCase().includes(searchText)
+        showMessage(
+            error.response?.data?.message ||
+            "Could not add user"
         );
-
-        displayUsers(filteredUsers);
-
-    } catch (error) {
-
-        console.error(error);
-
-        showMessage("Search failed");
     }
 }
