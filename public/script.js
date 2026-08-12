@@ -1,4 +1,4 @@
-const API = "";
+const API = "https://jinitha-day-16-auth-api.onrender.com";
 
 // ===============================
 // MESSAGE
